@@ -1,0 +1,101 @@
+<html>
+    <head>
+        <title>GitHub Experiment</title>
+        <script src="../jsPsych/jsPsych/jspsych.js"></script>
+        <script src="../jsPsych/jsPsych/plugin-html-keyboard-response.js"></script>
+        <script src="../jsPsych/jsPsych/plugin-html-button-response.js"></script>
+        <script src="../jsPsych/jsPsych/plugin-preload.js"></script>
+        <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            min-height: 100vh;
+        }
+        </style>
+    </head>
+    <body></body>
+    <script>
+        var jsPsych = initJsPsych({
+        on_finish: function() {
+            var csv = jsPsych.data.get().csv(); //把这些数据转换成 CSV 格式
+            var blob = new Blob([csv], {type: 'text/csv'}); //创建一个 CSV 文件
+            var url = URL.createObjectURL(blob); //创建下载链接
+            var a = document.createElement('a'); 
+            a.href = url;
+            a.download = 'experiment_data.csv'; //设置文件名字
+            a.click();
+            URL.revokeObjectURL(url); //实验结束以后：CSV 就会自动下载。
+        }
+    });
+
+        var timeline = [];
+        var preload = {
+            type: jsPsychPreload,
+            images: ['../img/img1.jpg', '../img/img2.jpg', '../img/img3.jpg', '../img/img4.jpg', 
+            '../img/img5.jpg', '../img/img6.jpg', '../img/img7.jpg', '../img/img8.jpg']
+        };
+        timeline.push(preload);
+
+        var welcome = {
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: 'Welcome to the experiment. Press any key to begin.'
+        };
+        timeline.push(welcome)
+
+        var instructions = {
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: `
+             <p> In this experiment, you will see a series of pictures.</p>
+             <p> For each picture, please describe what you see.</p>
+             <p> Press any key to continue.</p>
+             `
+        };  
+        timeline.push(instructions)
+
+         var stimulus = [
+            {images: '../img/img1.jpg'},
+            {images: '../img/img2.jpg'},
+            {images: '../img/img3.jpg'},
+            {images: '../img/img4.jpg'},
+            {images: '../img/img5.jpg'},
+            {images: '../img/img6.jpg'},
+            {images: '../img/img7.jpg'},
+            {images: '../img/img8.jpg'}
+        ];
+
+        var response = '';
+
+        var trials = {
+            type: jsPsychHtmlButtonResponse,
+            stimulus: function() {
+                return `
+                <h2>what do you see</h2>
+                <img src = "${jsPsych.timelineVariable('images', true)}">
+                <br><br> 
+                <textarea id = 'response' rows = '5' cols = '60'></textarea>`;
+            },
+            // <br>换行； textarea id是命名这个文本框
+            choices: ['Continue'],
+            on_load: function() {
+                document.querySelector('.jspsych-btn').addEventListener('click', function() {
+                    response = document.querySelector('#response').value;
+                }, true);
+            },
+            on_finish: function(data) {
+                data.response = response;
+                data.image = jsPsych.timelineVariable('images', true);
+            }
+        };
+        
+        var img_trials = {
+            timeline:[trials],
+            timeline_variables: stimulus,
+            // 这里trials要用【】变成array，而stimulus已经是array了
+            repetitions: 2
+        };
+        timeline.push(img_trials);
+
+        jsPsych.run(timeline)
+    </script>
